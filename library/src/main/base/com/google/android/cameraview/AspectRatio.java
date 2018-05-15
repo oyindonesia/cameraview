@@ -41,7 +41,7 @@ public class AspectRatio implements Comparable<AspectRatio>, Parcelable {
      * @return An instance of {@link AspectRatio}
      */
     public static AspectRatio of(int x, int y) {
-        int gcd = gcd(x, y);
+        int gcd = gcd2(x, y);
         x /= gcd;
         y /= gcd;
         SparseArrayCompat<AspectRatio> arrayX = sCache.get(x);
@@ -59,6 +59,11 @@ public class AspectRatio implements Comparable<AspectRatio>, Parcelable {
             }
             return ratio;
         }
+    }
+
+    private static int gcd2(int p, int q) {
+        if (q == 0) return p;
+        else return gcd2(q, p % q);
     }
 
     /**

@@ -18,7 +18,19 @@ package com.google.android.cameraview;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.Resources;
 import android.content.res.TypedArray;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
+import android.graphics.RectF;
 import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -29,6 +41,9 @@ import android.support.v4.os.ParcelableCompat;
 import android.support.v4.os.ParcelableCompatCreatorCallbacks;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
+import android.util.TypedValue;
+import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 
 import java.lang.annotation.Retention;
@@ -43,6 +58,8 @@ public class CameraView extends FrameLayout {
 
     /** The camera device faces the same direction as the device's screen. */
     public static final int FACING_FRONT = Constants.FACING_FRONT;
+
+    private Bitmap bitmap;
 
     /** Direction the camera faces relative to device screen. */
     @IntDef({FACING_BACK, FACING_FRONT})
@@ -76,6 +93,9 @@ public class CameraView extends FrameLayout {
 
     private boolean mAdjustViewBounds;
 
+    private int deviceHeight;
+    private int deviceWidth;
+
     private final DisplayOrientationDetector mDisplayOrientationDetector;
 
     public CameraView(Context context) {
@@ -89,7 +109,7 @@ public class CameraView extends FrameLayout {
     @SuppressWarnings("WrongConstant")
     public CameraView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        if (isInEditMode()){
+        if (isInEditMode()) {
             mCallbacks = null;
             mDisplayOrientationDetector = null;
             return;
@@ -109,12 +129,16 @@ public class CameraView extends FrameLayout {
                 R.style.Widget_CameraView);
         mAdjustViewBounds = a.getBoolean(R.styleable.CameraView_android_adjustViewBounds, false);
         setFacing(a.getInt(R.styleable.CameraView_facing, FACING_BACK));
-        String aspectRatio = a.getString(R.styleable.CameraView_aspectRatio);
-        if (aspectRatio != null) {
-            setAspectRatio(AspectRatio.parse(aspectRatio));
-        } else {
-            setAspectRatio(Constants.DEFAULT_ASPECT_RATIO);
-        }
+        getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+                deviceWidth = displayMetrics.widthPixels;
+                deviceHeight = displayMetrics.heightPixels;
+                setAspectRatio(AspectRatio.of(deviceHeight, deviceWidth));
+            }
+        });
         setAutoFocus(a.getBoolean(R.styleable.CameraView_autoFocus, true));
         setFlash(a.getInt(R.styleable.CameraView_flash, Constants.FLASH_AUTO));
         a.recycle();
@@ -156,7 +180,7 @@ public class CameraView extends FrameLayout {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        if (isInEditMode()){
+        if (isInEditMode()) {
             super.onMeasure(widthMeasureSpec, heightMeasureSpec);
             return;
         }
@@ -245,7 +269,7 @@ public class CameraView extends FrameLayout {
     public void start() {
         if (!mImpl.start()) {
             //store the state ,and restore this state after fall back o Camera1
-            Parcelable state=onSaveInstanceState();
+            Parcelable state = onSaveInstanceState();
             // Camera2 uses legacy hardware layer; fall back to Camera1
             mImpl = new Camera1(mCallbacks, createPreviewImpl(getContext()));
             onRestoreInstanceState(state);
@@ -405,6 +429,148 @@ public class CameraView extends FrameLayout {
      */
     public void takePicture() {
         mImpl.takePicture();
+    }
+
+    @Override
+    protected void dispatchDraw(Canvas canvas) {
+        super.dispatchDraw(canvas);
+
+        if (bitmap == null) {
+            createWindowFrame();
+        }
+        canvas.drawBitmap(bitmap, 0, 0, null);
+    }
+
+    public Bitmap getResizedBitmap(Bitmap bm, int newWidth, int newHeight) {
+        int width = bm.getWidth();
+        int height = bm.getHeight();
+        float scaleWidth = ((float) newWidth) / width;
+        float scaleHeight = ((float) newHeight) / height;
+        // CREATE A MATRIX FOR THE MANIPULATION
+        Matrix matrix = new Matrix();
+        // RESIZE THE BIT MAP
+        matrix.postScale(scaleWidth, scaleHeight);
+
+        // "RECREATE" THE NEW BITMAP
+        Bitmap resizedBitmap = Bitmap.createBitmap(
+                bm, 0, 0, width, height, matrix, false);
+        bm.recycle();
+        return resizedBitmap;
+    }
+
+    protected void createWindowFrame() {
+        bitmap = Bitmap.createBitmap(deviceWidth, deviceHeight, Bitmap.Config.ARGB_8888);
+        Canvas osCanvas = new Canvas(bitmap);
+        Bitmap face = BitmapFactory.decodeResource(getResources(),
+                R.drawable.frame_face);
+        face = getResizedBitmap(face, dpToPx(250), dpToPx(400));
+        Bitmap faceMask = BitmapFactory.decodeResource(getResources(),
+                R.drawable.frame_face_mask);
+        faceMask = getResizedBitmap(faceMask, dpToPx(250), dpToPx(400));
+        Rect outerRectangle = new Rect(0, 0, deviceWidth, deviceHeight);
+
+        Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paint.setColor(getResources().getColor(android.R.color.black));
+        paint.setAlpha(200);
+        osCanvas.drawRect(outerRectangle, paint);
+        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.XOR));
+        int centerX = deviceWidth / 2;
+        int centerY = deviceHeight / 2;
+        int radius = dpToPx(12);
+        int radiusx = dpToPx(250);
+        int radiusy = dpToPx(400);
+
+//        osCanvas.drawPath(
+//                roundedRect(centerX - 400, centerY - 250, centerX + 400, centerY + 250, radius,
+//                        radius, false), paint);
+//        osCanvas.drawBitmap(ktp, null,
+//                new Rect(centerX - 400, centerY - 250, centerX + 400, centerY + 250), null);
+//        osCanvas.drawPath(
+//                face(centerX - 250, centerY - 400, centerX + 250, centerY + 400, radiusx,
+//                        radiusy), paint);
+        osCanvas.drawBitmap(faceMask, centerX - radiusx / 2, centerY - radiusy / 2, paint);
+        osCanvas.drawBitmap(face, centerX - radiusx / 2, centerY - radiusy / 2, null);
+//        osCanvas.drawBitmap(ktp, outerRectangle,
+//                new Rect(centerX - 250, centerY - 400, centerX + 250, centerY + 400), null);
+
+//        osCanvas.drawBitmap(ktp, null,
+//                new Rect(centerX - 250, centerY - 400, centerX + 250, centerY + 400), null);
+    }
+
+    public static int dpToPx(int dp) {
+        return (int) (dp * Resources.getSystem().getDisplayMetrics().density);
+    }
+
+    public Path roundedRect(float left, float top, float right, float bottom, float rx, float ry,
+            boolean conformToOriginalPost) {
+        Path path = new Path();
+        if (rx < 0) rx = 0;
+        if (ry < 0) ry = 0;
+        float width = right - left;
+        float height = bottom - top;
+        if (rx > width / 2) rx = width / 2;
+        if (ry > height / 2) ry = height / 2;
+        float widthMinusCorners = (width - (2 * rx));
+        float heightMinusCorners = (height - (2 * ry));
+
+        path.moveTo(right, top + ry);
+        path.rQuadTo(0, -ry, -rx, -ry);//top-right corner
+        path.rLineTo(-widthMinusCorners, 0);
+        path.rQuadTo(-rx, 0, -rx, ry); //top-left corner
+        path.rLineTo(0, heightMinusCorners);
+
+        if (conformToOriginalPost) {
+            path.rLineTo(0, ry);
+            path.rLineTo(width, 0);
+            path.rLineTo(0, -ry);
+        } else {
+            path.rQuadTo(0, ry, rx, ry);//bottom-left corner
+            path.rLineTo(widthMinusCorners, 0);
+            path.rQuadTo(rx, 0, rx, -ry); //bottom-right corner
+        }
+
+        path.rLineTo(0, -heightMinusCorners);
+
+        path.close();//Given close, last lineto can be removed.
+
+        return path;
+    }
+
+    public Path face(float left, float top, float right, float bottom, float rx, float ry) {
+        Path path = new Path();
+        if (rx < 0) rx = 0;
+        if (ry < 0) ry = 0;
+        float width = right - left;
+        float height = bottom - top;
+        if (rx > width / 2) rx = width / 2;
+        if (ry > height / 2) ry = height / 2;
+        float widthMinusCorners = (width - (2 * rx));
+        float heightMinusCorners = (height - (2 * ry));
+
+        float ry1 = ry;
+        float ry2 = ry;
+        path.moveTo(right, top + ry1);
+        path.rQuadTo(0, -ry1, -rx, -ry1);//top-right corner
+//        path.rLineTo(-widthMinusCorners, 0);
+        path.rQuadTo(-rx, 0, -rx, ry1); //top-left corner
+//        path.rLineTo(0, heightMinusCorners);
+
+
+        path.rQuadTo(0, ry2, rx, ry2);//bottom-left corner
+//            path.rLineTo(widthMinusCorners, 0);
+        path.rQuadTo(rx, 0, rx, -ry2); //bottom-right corner
+
+//        path.rLineTo(0, -heightMinusCorners);
+
+        path.close();//Given close, last lineto can be removed.
+
+        return path;
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        super.onLayout(changed, l, t, r, b);
+        bitmap = null;
     }
 
     private class CallbackBridge implements CameraViewImpl.Callback {
