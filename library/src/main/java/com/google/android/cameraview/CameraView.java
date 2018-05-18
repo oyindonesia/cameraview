@@ -30,7 +30,6 @@ import android.graphics.Path;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
-import android.graphics.RectF;
 import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -59,6 +58,14 @@ public class CameraView extends FrameLayout {
     /** The camera device faces the same direction as the device's screen. */
     public static final int FACING_FRONT = Constants.FACING_FRONT;
 
+    public static final String SELFIE = "SELFIE";
+    public static final String KTP = "KTP";
+    public static final String SIM = "SIM";
+    public static final String NPWP = "NPWP";
+    public static final String PASSPORT = "PASSPORT";
+    public static final String SELFIE_ID = "SELFIE_ID";
+
+    private final int TITLE_MARGIN_BOTTOM = 20;
     private Bitmap bitmap;
 
     /** Direction the camera faces relative to device screen. */
@@ -97,6 +104,8 @@ public class CameraView extends FrameLayout {
     private int deviceWidth;
 
     private final DisplayOrientationDetector mDisplayOrientationDetector;
+    private String kycImageType;
+    private String title;
 
     public CameraView(Context context) {
         this(context, null);
@@ -129,16 +138,17 @@ public class CameraView extends FrameLayout {
                 R.style.Widget_CameraView);
         mAdjustViewBounds = a.getBoolean(R.styleable.CameraView_android_adjustViewBounds, false);
         setFacing(a.getInt(R.styleable.CameraView_facing, FACING_BACK));
-        getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-            @Override
-            public void onGlobalLayout() {
-                getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
-                deviceWidth = displayMetrics.widthPixels;
-                deviceHeight = displayMetrics.heightPixels;
-                setAspectRatio(AspectRatio.of(deviceHeight, deviceWidth));
-            }
-        });
+        getViewTreeObserver().addOnGlobalLayoutListener(
+                new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+                        deviceWidth = displayMetrics.widthPixels;
+                        deviceHeight = displayMetrics.heightPixels;
+                        setAspectRatio(AspectRatio.of(deviceHeight, deviceWidth));
+                    }
+                });
         setAutoFocus(a.getBoolean(R.styleable.CameraView_autoFocus, true));
         setFlash(a.getInt(R.styleable.CameraView_flash, Constants.FLASH_AUTO));
         a.recycle();
@@ -149,6 +159,14 @@ public class CameraView extends FrameLayout {
                 mImpl.setDisplayOrientation(displayOrientation);
             }
         };
+    }
+
+    public void setKycImageType(String kycImageType) {
+        this.kycImageType = kycImageType;
+    }
+
+    public void setTitleText(String title) {
+        this.title = title;
     }
 
     @NonNull
@@ -460,45 +478,91 @@ public class CameraView extends FrameLayout {
 
     protected void createWindowFrame() {
         bitmap = Bitmap.createBitmap(deviceWidth, deviceHeight, Bitmap.Config.ARGB_8888);
-        Canvas osCanvas = new Canvas(bitmap);
-        Bitmap face = BitmapFactory.decodeResource(getResources(),
-                R.drawable.frame_face);
-        face = getResizedBitmap(face, dpToPx(250), dpToPx(400));
-        Bitmap faceMask = BitmapFactory.decodeResource(getResources(),
-                R.drawable.frame_face_mask);
-        faceMask = getResizedBitmap(faceMask, dpToPx(250), dpToPx(400));
+        Canvas canvas = new Canvas(bitmap);
+//        Bitmap face = BitmapFactory.decodeResource(getResources(),
+//                R.drawable.frame_face);
+//        face = getResizedBitmap(face, dpToPx(250), dpToPx(400));
+//        faceMask = getResizedBitmap(faceMask, dpToPx(250), dpToPx(400));
         Rect outerRectangle = new Rect(0, 0, deviceWidth, deviceHeight);
 
         Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         paint.setColor(getResources().getColor(android.R.color.black));
         paint.setAlpha(200);
-        osCanvas.drawRect(outerRectangle, paint);
+        canvas.drawRect(outerRectangle, paint);
         paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.XOR));
         int centerX = deviceWidth / 2;
         int centerY = deviceHeight / 2;
         int radius = dpToPx(12);
-        int radiusx = dpToPx(250);
-        int radiusy = dpToPx(400);
-
-//        osCanvas.drawPath(
-//                roundedRect(centerX - 400, centerY - 250, centerX + 400, centerY + 250, radius,
-//                        radius, false), paint);
-//        osCanvas.drawBitmap(ktp, null,
-//                new Rect(centerX - 400, centerY - 250, centerX + 400, centerY + 250), null);
-//        osCanvas.drawPath(
-//                face(centerX - 250, centerY - 400, centerX + 250, centerY + 400, radiusx,
-//                        radiusy), paint);
-        osCanvas.drawBitmap(faceMask, centerX - radiusx / 2, centerY - radiusy / 2, paint);
-        osCanvas.drawBitmap(face, centerX - radiusx / 2, centerY - radiusy / 2, null);
-//        osCanvas.drawBitmap(ktp, outerRectangle,
+        Paint textPaint = new Paint();
+        textPaint.setStyle(Paint.Style.FILL);
+        textPaint.setColor(Color.WHITE);
+        textPaint.setTextAlign(Paint.Align.CENTER);
+        textPaint.setTextSize(spToPx(14));
+        switch (kycImageType) {
+            case SELFIE: {
+//                Bitmap face = BitmapFactory.decodeResource(getResources(),
+//                        R.drawable.frame_face);
+//                Bitmap faceMask = BitmapFactory.decodeResource(getResources(),
+//                        R.drawable.frame_face_mask);
+//                int height = face.getHeight();
+//                int width = face.getWidth();
+//                canvas.drawBitmap(faceMask, centerX - radiusx / 2, centerY - radiusy / 2,
+// paint);
+//                canvas.drawBitmap(face, centerX - radiusx / 2, centerY - radiusy / 2, null);
+                break;
+            }
+            case KTP: {
+                Bitmap picture = BitmapFactory.decodeResource(getResources(), R.drawable.frame_ktp);
+                drawRoundedRectBitmap(picture, centerX, centerY, canvas, radius, paint, textPaint);
+                break;
+            }
+            case SIM: {
+                Bitmap picture = BitmapFactory.decodeResource(getResources(), R.drawable.frame_sim);
+                drawRoundedRectBitmap(picture, centerX, centerY, canvas, radius, paint, textPaint);
+                break;
+            }
+            case NPWP: {
+                Bitmap picture = BitmapFactory.decodeResource(getResources(), R.drawable.frame_npwp);
+                drawRoundedRectBitmap(picture, centerX, centerY, canvas, radius, paint, textPaint);
+                break;
+            }
+            case PASSPORT: {
+                Bitmap picture = BitmapFactory.decodeResource(getResources(), R.drawable.frame_passport);
+                drawRoundedRectBitmap(picture, centerX, centerY, canvas, radius, paint, textPaint);
+                break;
+            }
+        }
+//        canvas.drawBitmap(ktp, outerRectangle,
 //                new Rect(centerX - 250, centerY - 400, centerX + 250, centerY + 400), null);
 
-//        osCanvas.drawBitmap(ktp, null,
+//        canvas.drawBitmap(ktp, null,
 //                new Rect(centerX - 250, centerY - 400, centerX + 250, centerY + 400), null);
     }
 
-    public static int dpToPx(int dp) {
-        return (int) (dp * Resources.getSystem().getDisplayMetrics().density);
+    private void drawRoundedRectBitmap(Bitmap picture, int centerX, int centerY, Canvas canvas,
+            int radius, Paint paint, Paint textPaint) {
+        int height = picture.getHeight();
+        int width = picture.getWidth();
+        canvas.drawText(title, centerX, centerY - (height / 2) - dpToPx(TITLE_MARGIN_BOTTOM), textPaint);
+        // draw masking
+        canvas.drawPath(
+                roundedRect(centerX - (width / 2), centerY - (height / 2),
+                        centerX + (width / 2), centerY + (height / 2), radius,
+                        radius, false), paint);
+        // draw the picture itself
+        canvas.drawBitmap(picture, null,
+                new Rect(centerX - (width / 2), centerY - (height / 2),
+                        centerX + (width / 2), centerY + (height / 2)), null);
+    }
+
+    private int dpToPx(int dp) {
+        return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp,
+                Resources.getSystem().getDisplayMetrics());
+    }
+
+    private int spToPx(int sp) {
+        return (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, sp,
+                Resources.getSystem().getDisplayMetrics());
     }
 
     public Path roundedRect(float left, float top, float right, float bottom, float rx, float ry,
@@ -530,37 +594,6 @@ public class CameraView extends FrameLayout {
         }
 
         path.rLineTo(0, -heightMinusCorners);
-
-        path.close();//Given close, last lineto can be removed.
-
-        return path;
-    }
-
-    public Path face(float left, float top, float right, float bottom, float rx, float ry) {
-        Path path = new Path();
-        if (rx < 0) rx = 0;
-        if (ry < 0) ry = 0;
-        float width = right - left;
-        float height = bottom - top;
-        if (rx > width / 2) rx = width / 2;
-        if (ry > height / 2) ry = height / 2;
-        float widthMinusCorners = (width - (2 * rx));
-        float heightMinusCorners = (height - (2 * ry));
-
-        float ry1 = ry;
-        float ry2 = ry;
-        path.moveTo(right, top + ry1);
-        path.rQuadTo(0, -ry1, -rx, -ry1);//top-right corner
-//        path.rLineTo(-widthMinusCorners, 0);
-        path.rQuadTo(-rx, 0, -rx, ry1); //top-left corner
-//        path.rLineTo(0, heightMinusCorners);
-
-
-        path.rQuadTo(0, ry2, rx, ry2);//bottom-left corner
-//            path.rLineTo(widthMinusCorners, 0);
-        path.rQuadTo(rx, 0, rx, -ry2); //bottom-right corner
-
-//        path.rLineTo(0, -heightMinusCorners);
 
         path.close();//Given close, last lineto can be removed.
 
