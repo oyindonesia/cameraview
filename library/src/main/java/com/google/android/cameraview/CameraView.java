@@ -500,15 +500,27 @@ public class CameraView extends FrameLayout {
         textPaint.setTextSize(spToPx(14));
         switch (kycImageType) {
             case SELFIE: {
-//                Bitmap face = BitmapFactory.decodeResource(getResources(),
-//                        R.drawable.frame_face);
-//                Bitmap faceMask = BitmapFactory.decodeResource(getResources(),
-//                        R.drawable.frame_face_mask);
-//                int height = face.getHeight();
-//                int width = face.getWidth();
-//                canvas.drawBitmap(faceMask, centerX - radiusx / 2, centerY - radiusy / 2,
-// paint);
-//                canvas.drawBitmap(face, centerX - radiusx / 2, centerY - radiusy / 2, null);
+                Bitmap face = BitmapFactory.decodeResource(getResources(),
+                        R.drawable.frame_face);
+                Bitmap faceMask = BitmapFactory.decodeResource(getResources(),
+                        R.drawable.frame_face_mask);
+                int height = face.getHeight();
+                int width = face.getWidth();
+                canvas.drawText(title, centerX, centerY - (height / 2) - dpToPx(TITLE_MARGIN_BOTTOM), textPaint);
+                canvas.drawBitmap(faceMask, centerX - (width / 2), centerY - (height / 2), paint);
+                canvas.drawBitmap(face, centerX - (width / 2), centerY - (height / 2), null);
+                break;
+            }
+            case SELFIE_ID: {
+                Bitmap face = BitmapFactory.decodeResource(getResources(),
+                        R.drawable.frame_face_id);
+                Bitmap faceMask = BitmapFactory.decodeResource(getResources(),
+                        R.drawable.frame_face_id_mask);
+                int height = face.getHeight();
+                int width = face.getWidth();
+                canvas.drawText(title, centerX, centerY - (height / 2) - dpToPx(TITLE_MARGIN_BOTTOM), textPaint);
+                canvas.drawBitmap(faceMask, centerX - (width / 2), centerY - (height / 2), paint);
+                canvas.drawBitmap(face, centerX - (width / 2), centerY - (height / 2), null);
                 break;
             }
             case KTP: {
