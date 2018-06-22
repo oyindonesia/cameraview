@@ -27,7 +27,6 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
@@ -43,9 +42,7 @@ import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
-import android.view.Display;
 import android.view.ViewTreeObserver;
-import android.view.WindowManager;
 import android.widget.FrameLayout;
 
 import java.lang.annotation.Retention;
@@ -146,13 +143,9 @@ public class CameraView extends FrameLayout {
                     @Override
                     public void onGlobalLayout() {
                         getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                        WindowManager wm = ((WindowManager)
-                               getContext().getSystemService(Context.WINDOW_SERVICE));
-                        Display display = wm.getDefaultDisplay();
-                        Point screenSize = new Point();
-                        display.getRealSize(screenSize);
-                        deviceWidth = screenSize.x;
-                        deviceHeight = screenSize.y;
+                        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+                        deviceWidth = displayMetrics.widthPixels;
+                        deviceHeight = displayMetrics.heightPixels;
                         setAspectRatio(AspectRatio.of(deviceHeight, deviceWidth));
                     }
                 });
