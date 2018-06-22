@@ -92,6 +92,7 @@ class Camera1 extends CameraViewImpl {
             setUpPreview();
         }
         mShowingPreview = true;
+        mCamera.setDisplayOrientation(90);
         mCamera.startPreview();
         return true;
     }
