@@ -70,7 +70,7 @@ class Camera1 extends CameraViewImpl {
 
     private int mFlash;
 
-    private int mDisplayOrientation;
+    private final int mDisplayOrientation = 90;
 
     Camera1(Callback callback, PreviewImpl preview) {
         super(callback, preview);
@@ -93,7 +93,7 @@ class Camera1 extends CameraViewImpl {
             setUpPreview();
         }
         mShowingPreview = true;
-        mCamera.setDisplayOrientation(90);
+        mCamera.setDisplayOrientation(mDisplayOrientation);
         mCamera.startPreview();
         return true;
     }
@@ -118,7 +118,7 @@ class Camera1 extends CameraViewImpl {
                 }
                 mCamera.setPreviewDisplay(mPreview.getSurfaceHolder());
                 if (needsToStopPreview) {
-                    mCamera.setDisplayOrientation(90);
+                    mCamera.setDisplayOrientation(mDisplayOrientation);
                     mCamera.startPreview();
                 }
             } else {
@@ -248,7 +248,7 @@ class Camera1 extends CameraViewImpl {
                     isPictureCaptureInProgress.set(false);
                     mCallback.onPictureTaken(data);
                     camera.cancelAutoFocus();
-                    camera.setDisplayOrientation(90);
+                    camera.setDisplayOrientation(mDisplayOrientation);
                     camera.startPreview();
                 }
             });
@@ -257,20 +257,19 @@ class Camera1 extends CameraViewImpl {
 
     @Override
     void setDisplayOrientation(int displayOrientation) {
-        if (mDisplayOrientation == displayOrientation) {
-            return;
-        }
-        mDisplayOrientation = displayOrientation;
+//        if (mDisplayOrientation == displayOrientation) {
+//            return;
+//        }
+//        mDisplayOrientation = displayOrientation;
         if (isCameraOpened()) {
-            mCameraParameters.setRotation(calcCameraRotation(displayOrientation));
+            mCameraParameters.setRotation(calcCameraRotation(mDisplayOrientation));
             mCamera.setParameters(mCameraParameters);
             final boolean needsToStopPreview = mShowingPreview && Build.VERSION.SDK_INT < 14;
             if (needsToStopPreview) {
                 mCamera.stopPreview();
             }
-            mCamera.setDisplayOrientation(calcDisplayOrientation(displayOrientation));
+            mCamera.setDisplayOrientation(mDisplayOrientation);
             if (needsToStopPreview) {
-                mCamera.setDisplayOrientation(90);
                 mCamera.startPreview();
             }
         }
@@ -311,7 +310,7 @@ class Camera1 extends CameraViewImpl {
             mAspectRatio = Constants.DEFAULT_ASPECT_RATIO;
         }
         adjustCameraParameters();
-        mCamera.setDisplayOrientation(calcDisplayOrientation(mDisplayOrientation));
+        mCamera.setDisplayOrientation(mDisplayOrientation);
         mCallback.onCameraOpened();
     }
 
@@ -347,7 +346,7 @@ class Camera1 extends CameraViewImpl {
         setFlashInternal(mFlash);
         mCamera.setParameters(mCameraParameters);
         if (mShowingPreview) {
-            mCamera.setDisplayOrientation(90);
+            mCamera.setDisplayOrientation(mDisplayOrientation);
             mCamera.startPreview();
         }
     }
@@ -398,13 +397,13 @@ class Camera1 extends CameraViewImpl {
      * @param screenOrientationDegrees Screen orientation in degrees
      * @return Number of degrees required to rotate preview
      */
-    private int calcDisplayOrientation(int screenOrientationDegrees) {
-        if (mCameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-            return (360 - (mCameraInfo.orientation + screenOrientationDegrees) % 360) % 360;
-        } else {  // back-facing
-            return (mCameraInfo.orientation - screenOrientationDegrees + 360) % 360;
-        }
-    }
+//    private int calcDisplayOrientation(int screenOrientationDegrees) {
+//        if (mCameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+//            return (360 - (mCameraInfo.orientation + screenOrientationDegrees) % 360) % 360;
+//        } else {  // back-facing
+//            return (mCameraInfo.orientation - screenOrientationDegrees + 360) % 360;
+//        }
+//    }
 
     /**
      * Calculate camera rotation
