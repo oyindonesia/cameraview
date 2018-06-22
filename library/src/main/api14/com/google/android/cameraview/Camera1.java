@@ -21,6 +21,7 @@ import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.os.Build;
 import android.support.v4.util.SparseArrayCompat;
+import android.util.Log;
 import android.view.SurfaceHolder;
 
 import java.io.IOException;
@@ -117,6 +118,7 @@ class Camera1 extends CameraViewImpl {
                 }
                 mCamera.setPreviewDisplay(mPreview.getSurfaceHolder());
                 if (needsToStopPreview) {
+                    mCamera.setDisplayOrientation(90);
                     mCamera.startPreview();
                 }
             } else {
@@ -169,7 +171,8 @@ class Camera1 extends CameraViewImpl {
         } else if (!mAspectRatio.equals(ratio)) {
             final Set<Size> sizes = mPreviewSizes.sizes(ratio);
             if (sizes == null) {
-                throw new UnsupportedOperationException(ratio + " is not supported");
+                ratio = AspectRatio.of(4, 3);
+                Log.d("AspectRatio", ratio + " is not supported. switch to default 4:3");
             } else {
                 mAspectRatio = ratio;
                 adjustCameraParameters();
@@ -245,6 +248,7 @@ class Camera1 extends CameraViewImpl {
                     isPictureCaptureInProgress.set(false);
                     mCallback.onPictureTaken(data);
                     camera.cancelAutoFocus();
+                    camera.setDisplayOrientation(90);
                     camera.startPreview();
                 }
             });
@@ -266,6 +270,7 @@ class Camera1 extends CameraViewImpl {
             }
             mCamera.setDisplayOrientation(calcDisplayOrientation(displayOrientation));
             if (needsToStopPreview) {
+                mCamera.setDisplayOrientation(90);
                 mCamera.startPreview();
             }
         }
@@ -342,6 +347,7 @@ class Camera1 extends CameraViewImpl {
         setFlashInternal(mFlash);
         mCamera.setParameters(mCameraParameters);
         if (mShowingPreview) {
+            mCamera.setDisplayOrientation(90);
             mCamera.startPreview();
         }
     }
