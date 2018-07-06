@@ -169,8 +169,13 @@ class Camera1 extends CameraViewImpl {
         } else if (!mAspectRatio.equals(ratio)) {
             final Set<Size> sizes = mPreviewSizes.sizes(ratio);
             if (sizes == null) {
-                mAspectRatio = Constants.DEFAULT_ASPECT_RATIO;
-                Log.d("AspectRatio", ratio + " is not supported. switch to default 4:3");
+                if (ratio.getX() == 37 && ratio.getY() == 18) {
+                    mAspectRatio = AspectRatio.of(16, 9);
+                    Log.d("AspectRatio", ratio + " means 18.5:9. switch to 16:9 for now");
+                } else {
+                    mAspectRatio = Constants.DEFAULT_ASPECT_RATIO;
+                    Log.d("AspectRatio", ratio + " is not supported. switch to default 4:3");
+                }
             } else {
                 mAspectRatio = ratio;
             }

@@ -61,7 +61,6 @@ public class CameraView extends FrameLayout {
     public static final String SELFIE = "SELFIE";
     public static final String KTP = "KTP";
     public static final String SIM = "SIM";
-    public static final String NPWP = "NPWP";
     public static final String PASSPORT = "PASSPORT";
     public static final String SELFIE_ID = "SELFIE_ID";
 
@@ -530,11 +529,6 @@ public class CameraView extends FrameLayout {
             }
             case SIM: {
                 Bitmap picture = BitmapFactory.decodeResource(getResources(), R.drawable.frame_sim);
-                drawRoundedRectBitmap(picture, centerX, centerY, canvas, radius, paint, textPaint);
-                break;
-            }
-            case NPWP: {
-                Bitmap picture = BitmapFactory.decodeResource(getResources(), R.drawable.frame_npwp);
                 drawRoundedRectBitmap(picture, centerX, centerY, canvas, radius, paint, textPaint);
                 break;
             }
