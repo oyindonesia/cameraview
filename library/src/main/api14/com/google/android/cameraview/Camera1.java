@@ -20,6 +20,7 @@ import android.annotation.SuppressLint;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.os.Build;
+import android.os.Handler;
 import android.support.v4.util.SparseArrayCompat;
 import android.util.Log;
 import android.view.SurfaceHolder;
@@ -136,6 +137,12 @@ class Camera1 extends CameraViewImpl {
     void setFacing(int facing) {
         if (mFacing == facing) {
             return;
+        }
+        if (facing == CameraView.FACING_FRONT) {
+            // if only has one camera, assume only has back camera
+            if (Camera.getNumberOfCameras() == 1) {
+                facing = CameraView.FACING_BACK;
+            }
         }
         mFacing = facing;
         if (isCameraOpened()) {
@@ -293,28 +300,38 @@ class Camera1 extends CameraViewImpl {
     }
 
     private void openCamera() {
+        int delay = 100;
         if (mCamera != null) {
             releaseCamera();
+            delay = 500;
         }
-        mCamera = Camera.open(mCameraId);
-        mCameraParameters = mCamera.getParameters();
-        // Supported preview sizes
-        mPreviewSizes.clear();
-        for (Camera.Size size : mCameraParameters.getSupportedPreviewSizes()) {
-            mPreviewSizes.add(new Size(size.width, size.height));
-        }
-        // Supported picture sizes;
-        mPictureSizes.clear();
-        for (Camera.Size size : mCameraParameters.getSupportedPictureSizes()) {
-            mPictureSizes.add(new Size(size.width, size.height));
-        }
-        // AspectRatio
-        if (mAspectRatio == null) {
-            mAspectRatio = Constants.DEFAULT_ASPECT_RATIO;
-        }
-        adjustCameraParameters();
-        mCamera.setDisplayOrientation(calcDisplayOrientation(mDisplayOrientation));
-        mCallback.onCameraOpened();
+        Handler handler = new Handler();
+        //add delay in case camera needs time to initialize
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                mCamera = Camera.open(mCameraId);
+                mCameraParameters = mCamera.getParameters();
+                // Supported preview sizes
+                mPreviewSizes.clear();
+                for (Camera.Size size : mCameraParameters.getSupportedPreviewSizes()) {
+                    mPreviewSizes.add(new Size(size.width, size.height));
+                }
+                // Supported picture sizes;
+                mPictureSizes.clear();
+                for (Camera.Size size : mCameraParameters.getSupportedPictureSizes()) {
+                    mPictureSizes.add(new Size(size.width, size.height));
+                }
+                // AspectRatio
+                if (mAspectRatio == null) {
+                    mAspectRatio = Constants.DEFAULT_ASPECT_RATIO;
+                }
+                adjustCameraParameters();
+                mCamera.setDisplayOrientation(calcDisplayOrientation(mDisplayOrientation));
+                mCallback.onCameraOpened();
+            }
+        }, delay);
+
     }
 
     private AspectRatio chooseAspectRatio() {

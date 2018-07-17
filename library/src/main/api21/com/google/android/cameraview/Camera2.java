@@ -19,6 +19,7 @@ package com.google.android.cameraview;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.ImageFormat;
+import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
@@ -244,6 +245,12 @@ class Camera2 extends CameraViewImpl {
         if (mFacing == facing) {
             return;
         }
+        if (facing == CameraView.FACING_FRONT) {
+            // if only has one camera, assume only has back camera
+            if (Camera.getNumberOfCameras() == 1) {
+                facing = CameraView.FACING_BACK;
+            }
+        }
         mFacing = facing;
         if (isCameraOpened()) {
             stop();
@@ -335,7 +342,13 @@ class Camera2 extends CameraViewImpl {
     @Override
     void takePicture() {
         if (mAutoFocus) {
-            lockFocus();
+            try {
+                lockFocus();
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to lockFocus(). captureStillPicture instead and turn off mAutoFocus", e);
+                captureStillPicture();
+                mAutoFocus = false;
+            }
         } else {
             captureStillPicture();
         }
@@ -579,7 +592,7 @@ class Camera2 extends CameraViewImpl {
     /**
      * Locks the focus as the first step for a still image capture.
      */
-    private void lockFocus() {
+    private void lockFocus() throws Exception {
         mPreviewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
                 CaptureRequest.CONTROL_AF_TRIGGER_START);
         try {
