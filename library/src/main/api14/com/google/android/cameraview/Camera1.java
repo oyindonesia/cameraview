@@ -90,11 +90,6 @@ class Camera1 extends CameraViewImpl {
     boolean start() {
         chooseCamera();
         openCamera();
-        if (mPreview.isReady()) {
-            setUpPreview();
-        }
-        mShowingPreview = true;
-        mCamera.startPreview();
         return true;
     }
 
@@ -329,6 +324,11 @@ class Camera1 extends CameraViewImpl {
                 adjustCameraParameters();
                 mCamera.setDisplayOrientation(calcDisplayOrientation(mDisplayOrientation));
                 mCallback.onCameraOpened();
+                if (mPreview.isReady()) {
+                    setUpPreview();
+                }
+                mShowingPreview = true;
+                mCamera.startPreview();
             }
         }, delay);
 

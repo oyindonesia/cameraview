@@ -107,8 +107,11 @@ public class MainActivity extends AppCompatActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mCameraView = (CameraView) findViewById(R.id.camera);
+        mCameraView = findViewById(R.id.camera);
         if (mCameraView != null) {
+            mCameraView.setKycImageType("SELFIE_ID");
+            mCameraView.setTitleText("Pastikan KTP anda sejajar dengan\n"
+                    + "garis panduan");
             mCameraView.addCallback(mCallback);
         }
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.take_picture);
