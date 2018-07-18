@@ -404,6 +404,13 @@ class Camera1 extends CameraViewImpl {
 
     private void releaseCamera() {
         if (mCamera != null) {
+            try {
+                if (mShowingPreview) {
+                    mCamera.stopPreview();
+                }
+            } catch (Exception e) {
+                Log.e("StopPreview", "Error to stop preview", e);
+            }
             mCamera.release();
             mCamera = null;
             mCallback.onCameraClosed();
