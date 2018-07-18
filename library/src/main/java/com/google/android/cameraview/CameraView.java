@@ -654,6 +654,13 @@ public class CameraView extends FrameLayout {
             }
         }
 
+        @Override
+        public void onCameraError(Exception e) {
+            for (Callback callback : mCallbacks) {
+                callback.onCameraError(CameraView.this, e);
+            }
+        }
+
         public void reserveRequestLayoutOnOpen() {
             mRequestLayoutOnOpen = true;
         }
@@ -730,6 +737,14 @@ public class CameraView extends FrameLayout {
          * @param cameraView The associated {@link CameraView}.
          */
         public void onCameraClosed(CameraView cameraView) {
+        }
+
+        /**
+         * Called when camera failed to open.
+         *
+         * @param cameraView The associated {@link CameraView}.
+         */
+        public void onCameraError(CameraView cameraView, Exception e) {
         }
 
         /**

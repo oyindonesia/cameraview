@@ -305,30 +305,35 @@ class Camera1 extends CameraViewImpl {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                mCamera = Camera.open(mCameraId);
-                mCameraParameters = mCamera.getParameters();
-                // Supported preview sizes
-                mPreviewSizes.clear();
-                for (Camera.Size size : mCameraParameters.getSupportedPreviewSizes()) {
-                    mPreviewSizes.add(new Size(size.width, size.height));
+                try {
+                    mCamera = Camera.open(mCameraId);
+                    mCameraParameters = mCamera.getParameters();
+                    // Supported preview sizes
+                    mPreviewSizes.clear();
+                    for (Camera.Size size : mCameraParameters.getSupportedPreviewSizes()) {
+                        mPreviewSizes.add(new Size(size.width, size.height));
+                    }
+                    // Supported picture sizes;
+                    mPictureSizes.clear();
+                    for (Camera.Size size : mCameraParameters.getSupportedPictureSizes()) {
+                        mPictureSizes.add(new Size(size.width, size.height));
+                    }
+                    // AspectRatio
+                    if (mAspectRatio == null) {
+                        mAspectRatio = Constants.DEFAULT_ASPECT_RATIO;
+                    }
+                    adjustCameraParameters();
+                    mCamera.setDisplayOrientation(calcDisplayOrientation(mDisplayOrientation));
+                    mCallback.onCameraOpened();
+                    if (mPreview.isReady()) {
+                        setUpPreview();
+                    }
+                    mShowingPreview = true;
+                    mCamera.startPreview();
+                } catch (Exception e) {
+                    Log.e("Camera1", "on open camera error", e);
+                    mCallback.onCameraError(e);
                 }
-                // Supported picture sizes;
-                mPictureSizes.clear();
-                for (Camera.Size size : mCameraParameters.getSupportedPictureSizes()) {
-                    mPictureSizes.add(new Size(size.width, size.height));
-                }
-                // AspectRatio
-                if (mAspectRatio == null) {
-                    mAspectRatio = Constants.DEFAULT_ASPECT_RATIO;
-                }
-                adjustCameraParameters();
-                mCamera.setDisplayOrientation(calcDisplayOrientation(mDisplayOrientation));
-                mCallback.onCameraOpened();
-                if (mPreview.isReady()) {
-                    setUpPreview();
-                }
-                mShowingPreview = true;
-                mCamera.startPreview();
             }
         }, delay);
 
