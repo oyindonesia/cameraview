@@ -213,9 +213,14 @@ class Camera2 extends CameraViewImpl {
         if (!chooseCameraIdByFacing()) {
             return false;
         }
-        collectCameraInfo();
-        prepareImageReader();
-        startOpeningCamera();
+        try {
+            collectCameraInfo();
+            prepareImageReader();
+            startOpeningCamera();
+        } catch(Exception e) {
+            Log.e(TAG, "Failed to start camera2", e);
+            mCallback.onCameraError(e);
+        }
         return true;
     }
 
@@ -345,7 +350,10 @@ class Camera2 extends CameraViewImpl {
             try {
                 lockFocus();
             } catch (Exception e) {
-                Log.e(TAG, "Failed to lockFocus(). captureStillPicture instead and turn off mAutoFocus", e);
+                Log.e(TAG,
+                        "Failed to lockFocus(). captureStillPicture instead and turn off "
+                                + "mAutoFocus",
+                        e);
                 captureStillPicture();
                 mAutoFocus = false;
             }
@@ -460,10 +468,34 @@ class Camera2 extends CameraViewImpl {
         if (mImageReader != null) {
             mImageReader.close();
         }
-        Size largest = mPictureSizes.sizes(mAspectRatio).last();
-        mImageReader = ImageReader.newInstance(largest.getWidth(), largest.getHeight(),
+        final Size pictureSize;
+        SortedSet<Size> sizes = mPictureSizes.sizes(mAspectRatio);
+        if (sizes == null) { // Not supported
+            mAspectRatio = chooseAspectRatio();
+            if (mPictureSizes.sizes(mAspectRatio) == null) {
+                pictureSize = chooseOptimalSize();
+            } else {
+                // Largest picture size in this ratio
+                pictureSize = mPictureSizes.sizes(mAspectRatio).last();
+            }
+        } else {
+            pictureSize = sizes.last();
+        }
+
+        mImageReader = ImageReader.newInstance(pictureSize.getWidth(), pictureSize.getHeight(),
                 ImageFormat.JPEG, /* maxImages */ 2);
         mImageReader.setOnImageAvailableListener(mOnImageAvailableListener, null);
+    }
+
+    private AspectRatio chooseAspectRatio() {
+        AspectRatio r = null;
+        for (AspectRatio ratio : mPreviewSizes.ratios()) {
+            r = ratio;
+            if (ratio.equals(Constants.DEFAULT_ASPECT_RATIO)) {
+                return ratio;
+            }
+        }
+        return r;
     }
 
     /**

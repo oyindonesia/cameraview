@@ -357,7 +357,11 @@ public class CameraView extends FrameLayout {
      *               {@link #FACING_FRONT}.
      */
     public void setFacing(@Facing int facing) {
-        mImpl.setFacing(facing);
+        try {
+            mImpl.setFacing(facing);
+        } catch (Exception e) {
+            mCallbacks.onCameraError(e);
+        }
     }
 
     /**
@@ -426,7 +430,11 @@ public class CameraView extends FrameLayout {
      * @param flash The desired flash mode.
      */
     public void setFlash(@Flash int flash) {
-        mImpl.setFlash(flash);
+        try {
+            mImpl.setFlash(flash);
+        } catch (Exception e) {
+            mCallbacks.onCameraError(e);
+        }
     }
 
     /**
@@ -505,7 +513,8 @@ public class CameraView extends FrameLayout {
                         R.drawable.frame_face_mask);
                 int height = face.getHeight();
                 int width = face.getWidth();
-                canvas.drawText(title, centerX, centerY - (height / 2) - dpToPx(TITLE_MARGIN_BOTTOM), textPaint);
+                canvas.drawText(title, centerX,
+                        centerY - (height / 2) - dpToPx(TITLE_MARGIN_BOTTOM), textPaint);
                 canvas.drawBitmap(faceMask, centerX - (width / 2), centerY - (height / 2), paint);
                 canvas.drawBitmap(face, centerX - (width / 2), centerY - (height / 2), null);
                 break;
@@ -517,7 +526,8 @@ public class CameraView extends FrameLayout {
                         R.drawable.frame_face_id_mask);
                 int height = face.getHeight();
                 int width = face.getWidth();
-                canvas.drawText(title, centerX, centerY - (height / 2) - dpToPx(TITLE_MARGIN_BOTTOM), textPaint);
+                canvas.drawText(title, centerX,
+                        centerY - (height / 2) - dpToPx(TITLE_MARGIN_BOTTOM), textPaint);
                 canvas.drawBitmap(faceMask, centerX - (width / 2), centerY - (height / 2), paint);
                 canvas.drawBitmap(face, centerX - (width / 2), centerY - (height / 2), null);
                 break;
@@ -533,7 +543,8 @@ public class CameraView extends FrameLayout {
                 break;
             }
             case PASSPORT: {
-                Bitmap picture = BitmapFactory.decodeResource(getResources(), R.drawable.frame_passport);
+                Bitmap picture = BitmapFactory.decodeResource(getResources(),
+                        R.drawable.frame_passport);
                 drawRoundedRectBitmap(picture, centerX, centerY, canvas, radius, paint, textPaint);
                 break;
             }
@@ -549,7 +560,8 @@ public class CameraView extends FrameLayout {
             int radius, Paint paint, Paint textPaint) {
         int height = picture.getHeight();
         int width = picture.getWidth();
-        canvas.drawText(title, centerX, centerY - (height / 2) - dpToPx(TITLE_MARGIN_BOTTOM), textPaint);
+        canvas.drawText(title, centerX, centerY - (height / 2) - dpToPx(TITLE_MARGIN_BOTTOM),
+                textPaint);
         // draw masking
         canvas.drawPath(
                 roundedRect(centerX - (width / 2), centerY - (height / 2),
