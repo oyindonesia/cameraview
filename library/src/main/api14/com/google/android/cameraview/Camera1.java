@@ -79,8 +79,13 @@ class Camera1 extends CameraViewImpl {
             @Override
             public void onSurfaceChanged() {
                 if (mCamera != null) {
-                    setUpPreview();
-                    adjustCameraParameters();
+                    try {
+                        setUpPreview();
+                        adjustCameraParameters();
+                    } catch (Exception e) {
+                        Log.e("Camera1", "on preview callback error", e);
+                        mCallback.onCameraError(e);
+                    }
                 }
             }
         });
