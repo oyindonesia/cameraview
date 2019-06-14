@@ -13,7 +13,15 @@
 // limitations under the License.
 
 apply plugin: 'com.android.application'
-
+buildscript {
+    repositories {
+        google()
+        jcenter()
+    }
+    dependencies {
+        classpath "com.android.tools.build:gradle:3.2.1"
+    }
+}
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
 

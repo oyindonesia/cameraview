@@ -74,6 +74,7 @@ class Camera2 extends CameraViewImpl {
             mCamera = camera;
             mCallback.onCameraOpened();
             startCaptureSession();
+            setAutoFocus(true);
         }
 
         @Override
@@ -261,6 +262,7 @@ class Camera2 extends CameraViewImpl {
             stop();
             start();
         }
+        updateAutoFocus();
     }
 
     @Override
@@ -528,7 +530,8 @@ class Camera2 extends CameraViewImpl {
             mCamera.createCaptureSession(Arrays.asList(surface, mImageReader.getSurface()),
                     mSessionCallback, null);
         } catch (CameraAccessException e) {
-            throw new RuntimeException("Failed to start camera session");
+            Log.e("Camera2", "fail startCaptureSession, reason:" + e.getReason(), e.getCause());
+            mCallback.onCameraError(e);
         }
     }
 

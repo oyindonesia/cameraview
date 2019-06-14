@@ -95,6 +95,7 @@ class Camera1 extends CameraViewImpl {
     boolean start() {
         chooseCamera();
         openCamera();
+        setAutoFocus(true);
         return true;
     }
 
